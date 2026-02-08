@@ -153,3 +153,4 @@ if __name__ == "__main__":
     print(str(total_dist))
     img = arr_to_image(pixel_arr, full_path)
     img.save(output_image)
+    sys.exit()
