@@ -12,7 +12,7 @@ TERRAIN = {
     (2, 208, 60): 1.25, # Slow Run Forest
     (2, 136, 40): 1.67, # Walk Forest
     (5, 73, 24): float('inf'), # Vegetation
-    (0, 0, 255): float('inf'), # Lake
+    (0, 0, 255): 4, # Lake
     (205, 0, 101): float('inf') # Out of Bounds
 }
 PATH = (177, 86, 237)
