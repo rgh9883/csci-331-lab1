@@ -3,7 +3,7 @@ import heapq
 import math
 from PIL import Image
 
-terrain = {
+TERRAIN = {
     (71, 51, 3): 0.45, # Paved Road
     (0, 0, 0): 0.56, # Footpath
     (248, 148, 18): 0.67, # Open Land
@@ -15,7 +15,7 @@ terrain = {
     (0, 0, 255): float('inf'), # Lake
     (205, 0, 101): float('inf') # Out of Bounds
 }
-
+PATH = (177, 86, 237)
 DX = 10.29
 DY = 7.55
 
@@ -60,11 +60,11 @@ def astar(start, goal, pixel_arr, elev_arr):
         
         cx, cy = cur
         for x, y in neighbors(cx, cy, w, h):
-            if terrain[pixel_arr[y][x]] == float('inf'):
+            if TERRAIN[pixel_arr[y][x]] == float('inf'):
                 continue
             
             neighbor = (x, y)
-            terrain_mult = terrain[pixel_arr[cy][cx]]
+            terrain_mult = TERRAIN[pixel_arr[cy][cx]]
             cost = distance(cur, neighbor, elev_arr) * terrain_mult
             ng = g[cur] + cost
 
@@ -80,11 +80,17 @@ def build_path(parent, goal, elev_arr):
     dist = 0.0
     path = []
     cur = goal
+    prev = None
 
     while cur is not None:
         path.append(cur)
+        if prev is not None:
+            dist += distance(cur, prev, elev_arr)
+        prev = cur
         cur = parent[cur]
 
+    path.reverse()
+    return path, dist
 
 def parse_image(image_path):
     img = Image.open(image_path).convert("RGB")
@@ -93,13 +99,15 @@ def parse_image(image_path):
 
     return pixel_arr
 
-def arr_to_image(pixel_arr):
+def arr_to_image(pixel_arr, path_arr):
     h = len(pixel_arr)
     w = len(pixel_arr[0])
     img = Image.new("RGB", (w, h))
     for y in range(h):
         for x in range(w):
             img.putpixel((x,y), pixel_arr[y][x])
+    for x, y in path_arr:
+        img.putpixel((x,y), PATH)
     return img
 
 def parse_elevation(elev_file):
@@ -132,4 +140,16 @@ if __name__ == "__main__":
     pixel_arr = parse_image(image_path)
     elev_arr = parse_elevation(elev_file)
     path_arr = parse_path(path_file)
-    img = arr_to_image(pixel_arr)
+    
+    full_path = []
+    total_dist = 0.0
+    for i in range(len(path_arr)-1):
+        parent = astar(path_arr[i], path_arr[i+1], pixel_arr, elev_arr)
+        segment, dist = build_path(parent, path_arr[i+1], elev_arr)
+        total_dist += dist
+        full_path.extend(segment[:-1])
+    full_path.append(path_arr[-1])
+
+    print(str(total_dist))
+    img = arr_to_image(pixel_arr, full_path)
+    img.save(output_image)
